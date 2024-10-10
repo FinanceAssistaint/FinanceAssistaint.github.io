@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;400;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 20px;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        input, select, button {
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        button {
+            background-color: #36A2EB;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #graficoTransacoes {
+            margin-top: 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Controle Financeiro</h1>
+    <div>
+        <h2>Adicionar Transação</h2>
+        <input type="text" id="descricao" placeholder="Descrição">
+        <select id="categoria">
+            <option>Alimentação</option>
+            <option>Transporte</option>
+            <option>Saúde</option>
+            <option>Outros</option>
+        </select>
+        <input type="number" id="debito" placeholder="Débito">
+        <input type="number" id="credito" placeholder="Crédito">
+        <button id="adicionar">Adicionar</button>
+        <button id="atualizar" style="display:none;">Atualizar</button>
+        <button id="exportar">Exportar CSV</button>
+    </div>
+    
+    <h2>Pesquisar Transações</h2>
+    <input type="text" id="search" placeholder="Pesquisar transações...">
+
+    <h2>Transações</h2>
+    <ul id="transacoes-lista"></ul>
+    <h2>Saldo: R$ <span id="saldo">0.00</span></h2>
+    <canvas id="graficoTransacoes" width="400" height="200"></canvas>
+
+    <script>
+        let transacoes = [];
+        const ctx = document.getElementById('graficoTransacoes').getContext('2d');
+        let grafico;
+
+        function salvarTransacoesNoLocalStorage(usuarioLogado) {
+            const transacoesSalvas = JSON.parse(localStorage.getItem('transacoes')) || {};
+            if (!transacoesSalvas[usuarioLogado]) {
+                transacoesSalvas[usuarioLogado] = [];
+            }
+            transacoesSalvas[usuarioLogado] = transacoes;
+            localStorage.setItem('transacoes', JSON.stringify(transacoesSalvas));
+        }
+
+        function carregarTransacoesDoLocalStorage(usuarioLogado) {
+            const transacoesSalvas = JSON.parse(localStorage.getItem('transacoes'));
+            if (transacoesSalvas && transacoesSalvas[usuarioLogado]) {
+                transacoes = transacoesSalvas[usuarioLogado];
+                atualizarListaDeTransacoes(transacoes);
+                atualizarSaldo();
+                atualizarGrafico();
+            }
+        }
+
+        function atualizarSaldo() {
+            const saldo = transacoes.reduce((acc, transacao) => acc + transacao.credito - transacao.debito, 0);
+            document.getElementById('saldo').textContent = saldo.toFixed(2);
+        }
+
+        function adicionarTransacao() {
+            const descricao = document.getElementById('descricao').value.trim();
+            const categoria = document.getElementById('categoria').value;
+            const debito = parseFloat(document.getElementById('debito').value) || 0;
+            const credito = parseFloat(document.getElementById('credito').value) || 0;
+
+            if (!descricao) {
+                alert('Por favor, insira uma descrição válida.');
+                return;
+            }
+
+            const transacao = {
+                descricao,
+                categoria,
+                debito,
+                credito,
+                id: Date.now()
+            };
+
+            transacoes.push(transacao);
+            atualizarListaDeTransacoes(transacoes);
+            atualizarSaldo();
+            const usuarioLogado = localStorage.getItem('usuarioLogado');
+            salvarTransacoesNoLocalStorage(usuarioLogado);
+            atualizarGrafico();
+            limparFormulario();
+        }
+
+        function atualizarListaDeTransacoes(listaTransacoes) {
+            const lista = document.getElementById('transacoes-lista');
+            lista.innerHTML = '';
+
+            listaTransacoes.forEach(transacao => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <strong>${transacao.descricao}</strong> - ${transacao.categoria} 
+                    | Débito: R$ ${transacao.debito.toFixed(2)} 
+                    | Crédito: R$ ${transacao.credito.toFixed(2)}
+                    <button onclick="editarTransacao(${transacao.id})">Editar</button>
+                    <button onclick="excluirTransacao(${transacao.id})">Excluir</button>
+                `;
+                lista.appendChild(li);
+            });
+        }
+
+        function editarTransacao(id) {
+            const transacao = transacoes.find(transacao => transacao.id === id);
+            document.getElementById('descricao').value = transacao.descricao;
+            document.getElementById('categoria').value = transacao.categoria;
+            document.getElementById('debito').value = transacao.debito;
+            document.getElementById('credito').value = transacao.credito;
+
+            document.getElementById('adicionar').style.display = 'none';
+            document.getElementById('atualizar').style.display = 'block';
+
+            document.getElementById('atualizar').onclick = function () {
+                atualizarTransacao(id);
+            };
+        }
+
+        function atualizarTransacao(id) {
+            const transacao = transacoes.find(transacao => transacao.id === id);
+            transacao.descricao = document.getElementById('descricao').value;
+            transacao.categoria = document.getElementById('categoria').value;
+            transacao.debito = parseFloat(document.getElementById('debito').value) || 0;
+            transacao.credito = parseFloat(document.getElementById('credito').value) || 0;
+
+            atualizarListaDeTransacoes(transacoes);
+            atualizarSaldo();
+            const usuarioLogado = localStorage.getItem('usuarioLogado');
+            salvarTransacoesNoLocalStorage(usuarioLogado);
+            atualizarGrafico();
+            limparFormulario();
+
+            document.getElementById('adicionar').style.display = 'block';
+            document.getElementById('atualizar').style.display = 'none';
+        }
+
+        function excluirTransacao(id) {
+            transacoes = transacoes.filter(transacao => transacao.id !== id);
+            atualizarListaDeTransacoes(transacoes);
+            atualizarSaldo();
+            const usuarioLogado = localStorage.getItem('usuarioLogado');
+            salvarTransacoesNoLocalStorage(usuarioLogado);
+            atualizarGrafico();
+        }
+
+        function limparFormulario() {
+            document.getElementById('descricao').value = '';
+            document.getElementById('categoria').value = 'Alimentação';
+            document.getElementById('debito').value = '';
+            document.getElementById('credito').value = '';
+        }
+
+        window.onload = function() {
+            const usuarioLogado = localStorage.getItem('usuarioLogado');
+            if (usuarioLogado) {
+                carregarTransacoesDoLocalStorage(usuarioLogado);
+            }
+        };
+
+        function exportarCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,Descrição,Categoria,Débito,Crédito\n";
+            transacoes.forEach(transacao => {
+                const row = `${transacao.descricao},${transacao.categoria},${transacao.debito},${transacao.credito}\n`;
+                csvContent += row;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'transacoes.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.getElementById('exportar').addEventListener('click', exportarCSV);
+        document.getElementById('adicionar').addEventListener('click', adicionarTransacao);
+
+        function atualizarGrafico() {
+            const totalDebito = transacoes.reduce((acc, transacao) => acc + transacao.debito, 0);
+            const totalCredito = transacoes.reduce((acc, transacao) => acc + transacao.credito, 0);
+            const total = totalCredito - totalDebito;
+
+            if (grafico) {
+                grafico.destroy();
+            }
+
+            grafico = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Crédito', 'Débito'],
+                    datasets: [{
+                        label: 'Total',
+                        data: [totalCredito, totalDebito],
+                        backgroundColor: ['#36A2EB', '#FF6384'],
+                        borderColor: ['#36A2EB', '#FF6384'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Função para pesquisar transações
+        document.getElementById('search').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const transacoesFiltradas = transacoes.filter(transacao => 
+                transacao.descricao.toLowerCase().includes(searchTerm) || 
+                transacao.categoria.toLowerCase().includes(searchTerm)
+            );
+            atualizarListaDeTransacoes(transacoesFiltradas);
+        });
+    </script>
+</body>
+</html>

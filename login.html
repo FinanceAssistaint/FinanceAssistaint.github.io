@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="login.css"> <!-- Link para o CSS -->
+</head>
+<body>
+    <div class="login-container"> <!-- Contêiner para centralizar o formulário -->
+        <h1>Bem-vindo!</h1>
+        <form id="login-form">
+            <label for="username">Usuário:</label>
+            <input type="text" id="username" required placeholder="Digite seu usuário"><br>
+            
+            <label for="password">Senha:</label>
+            <input type="password" id="password" required placeholder="Digite sua senha"><br>
+            
+            <button type="submit">Entrar</button><br>
+            
+            <p id="error-message">Usuário ou senha incorretos.</p>
+        </form>
+        <p>Não tem uma conta? <a href="cadastro.html">Cadastre-se aqui</a></p> <!-- Link para o cadastro -->
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>
