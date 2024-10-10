@@ -49,6 +49,19 @@
             border-bottom: 1px solid #ccc;
         }
     </style>
+    <script>
+        // Verificação do login
+        window.onload = function() {
+            const usuarioLogado = localStorage.getItem('usuarioLogado');
+            if (!usuarioLogado) {
+                // Se não houver um usuário logado, redireciona para a página de login
+                window.location.href = 'login.html';
+            } else {
+                // Caso o usuário esteja logado, carrega as transações
+                carregarTransacoesDoLocalStorage(usuarioLogado);
+            }
+        };
+    </script>
 </head>
 <body>
     <h1>Controle Financeiro</h1>
@@ -199,13 +212,6 @@
             document.getElementById('credito').value = '';
         }
 
-        window.onload = function() {
-            const usuarioLogado = localStorage.getItem('usuarioLogado');
-            if (usuarioLogado) {
-                carregarTransacoesDoLocalStorage(usuarioLogado);
-            }
-        };
-
         function exportarCSV() {
             let csvContent = "data:text/csv;charset=utf-8,Descrição,Categoria,Débito,Crédito\n";
             transacoes.forEach(transacao => {
@@ -237,34 +243,15 @@
             grafico = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Crédito', 'Débito'],
+                    labels: ['Débito', 'Crédito', 'Total'],
                     datasets: [{
-                        label: 'Total',
-                        data: [totalCredito, totalDebito],
-                        backgroundColor: ['#36A2EB', '#FF6384'],
-                        borderColor: ['#36A2EB', '#FF6384'],
-                        borderWidth: 1
+                        label: 'Resumo das Transações',
+                        data: [totalDebito, totalCredito, total],
+                        backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe']
                     }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
                 }
             });
         }
-
-        // Função para pesquisar transações
-        document.getElementById('search').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const transacoesFiltradas = transacoes.filter(transacao => 
-                transacao.descricao.toLowerCase().includes(searchTerm) || 
-                transacao.categoria.toLowerCase().includes(searchTerm)
-            );
-            atualizarListaDeTransacoes(transacoesFiltradas);
-        });
     </script>
 </body>
 </html>
