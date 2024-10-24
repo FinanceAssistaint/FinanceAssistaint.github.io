@@ -1,80 +1,123 @@
-body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #f9f9f9;
-    color: #333;
+/* Resetando margens e padding */
+* {
     margin: 0;
-    padding: 20px;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-.container {
-    max-width: 800px;
-    margin: auto;
-    background: #fff;
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center; /* Centralizando o conteúdo */
+    align-items: flex-start; /* Alinhando no topo */
+    height: 100vh; /* Altura da tela para centralizar verticalmente */
+}
+
+/* Estilo do painel lateral */
+.sidebar {
+    width: 30%; /* Largura do painel lateral */
     padding: 20px;
-    border-radius: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-right: 20px;
+}
+
+/* Estilo do conteúdo principal */
+.main-content {
+    width: 70%; /* Largura do conteúdo principal */
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-h1 {
-    text-align: center;
-    color: #4a4a4a;
-}
-
-label {
-    display: block;
-    margin: 10px 0 5px;
-}
-
+/* Estilo dos inputs e botões */
 input[type="text"],
 input[type="number"],
+input[type="date"],
 select {
-    width: 100%;
+    width: 100%; /* Largura total do input */
     padding: 10px;
+    margin-bottom: 15px; /* Espaçamento entre os campos */
     border: 1px solid #ccc;
     border-radius: 5px;
-    box-sizing: border-box;
+    transition: border-color 0.3s;
 }
 
 input[type="text"]:focus,
 input[type="number"]:focus,
+input[type="date"]:focus,
 select:focus {
-    border-color: #66afe9;
+    border-color: #007bff; /* Cor de foco */
     outline: none;
 }
 
 button {
-    background-color: #4CAF50;
-    color: white;
     padding: 10px 15px;
     border: none;
     border-radius: 5px;
+    background-color: #007bff;
+    color: white;
     cursor: pointer;
-    margin-top: 10px;
+    transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #0056b3; /* Cor de fundo do botão ao passar o mouse */
+}
+
+/* Estilo da lista de transações */
+#transacoes {
+    list-style-type: none;
+    margin-top: 20px;
 }
 
 .transacao {
-    background: #f1f1f1;
+    display: flex;
+    justify-content: space-between;
     padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
     border-radius: 5px;
-    margin: 5px 0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
 }
 
-#transacoes-lista {
-    list-style: none;
-    padding: 0;
+.transacao span {
+    flex: 1;
 }
 
-@media (max-width: 600px) {
-    .container {
-        padding: 10px;
-    }
-    
-    button {
-        width: 100%;
-    }
+.transacao button {
+    margin-left: 10px;
+}
+
+/* Estilo do gráfico */
+.canvas-container {
+    margin-top: 20px;
+}
+
+/* Estilo do cabeçalho */
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+h2 {
+    margin-bottom: 15px;
+}
+
+/* Estilo do campo de busca */
+#search {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%; /* Estica a caixa de busca para ocupar toda a largura */
+}
+
+/* Container para inputs empilhados */
+.input-container {
+    display: flex;
+    flex-direction: column; /* Empilha os elementos em coluna */
 }
