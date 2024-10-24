@@ -8,16 +8,8 @@ function criarGrafico() {
     const debitos = transacoes.map(transacao => transacao.debito);
     const creditos = transacoes.map(transacao => transacao.credito);
 
-    // Ajuste para o gráfico de créditos
-    const totalDebitos = debitos.reduce((acc, debito) => acc + debito, 0);
-    const totalCreditos = creditos.reduce((acc, credito) => acc + credito, 0);
-
-    const creditosAjustados = debitos.map(debito => {
-        return totalCreditos - (totalCreditos * (debito / (totalDebitos || 1)));
-    });
-
     graficoTransacoes = new Chart(ctx, {
-        type: 'line', // Tipo de gráfico
+        type: 'line',
         data: {
             labels: labels,
             datasets: [
@@ -29,7 +21,7 @@ function criarGrafico() {
                 },
                 {
                     label: 'Créditos',
-                    data: creditosAjustados,
+                    data: creditos,
                     borderColor: 'green',
                     fill: false
                 }
@@ -57,9 +49,6 @@ function atualizarGrafico() {
 // Salvar transações no Local Storage
 function salvarTransacoesNoLocalStorage(usuarioLogado) {
     const transacoesSalvas = JSON.parse(localStorage.getItem('transacoes')) || {};
-    if (!transacoesSalvas[usuarioLogado]) {
-        transacoesSalvas[usuarioLogado] = [];
-    }
     transacoesSalvas[usuarioLogado] = transacoes;
     localStorage.setItem('transacoes', JSON.stringify(transacoesSalvas));
 }
@@ -94,34 +83,79 @@ function validarFormulario(descricao, debito, credito) {
     return true;
 }
 
-// Adicionar nova transação
-function adicionarTransacao() {
+// Função para adicionar ou atualizar transação
+function manipularTransacao(id) {
     const descricao = document.getElementById('descricao').value.trim();
     const categoria = document.getElementById('categoria').value;
     const debito = parseFloat(document.getElementById('debito').value) || 0;
     const credito = parseFloat(document.getElementById('credito').value) || 0;
 
-    // Validar formulário
     if (!validarFormulario(descricao, debito, credito)) {
         return; // Se a validação falhar, não prosseguir
     }
 
-    const transacao = {
-        descricao,
-        categoria,
-        debito,
-        credito,
-        id: Date.now()
-    };
+    if (id) { // Atualizando transação existente
+        const transacao = transacoes.find(transacao => transacao.id === id);
+        transacao.descricao = descricao;
+        transacao.categoria = categoria;
+        transacao.debito = debito;
+        transacao.credito = credito;
+    } else { // Adicionando nova transação
+        const transacao = {
+            descricao,
+            categoria,
+            debito,
+            credito,
+            id: Date.now() // Usando timestamp como ID
+        };
+        transacoes.push(transacao);
+    }
 
-    transacoes.push(transacao);
+    atualizarListaDeTransacoes();
+    atualizarSaldo();
+
+    const usuarioLogado = localStorage.getItem('usuarioLogado'); 
+    salvarTransacoesNoLocalStorage(usuarioLogado);
+    atualizarGrafico(); // Atualiza o gráfico após adicionar ou editar
+    limparFormulario();
+}
+
+// Adicionar nova transação
+document.getElementById('adicionar').addEventListener('click', () => manipularTransacao());
+
+// Editar uma transação existente
+function editarTransacao(id) {
+    const transacao = transacoes.find(transacao => transacao.id === id);
+    
+    document.getElementById('descricao').value = transacao.descricao;
+    document.getElementById('categoria').value = transacao.categoria;
+    document.getElementById('debito').value = transacao.debito;
+    document.getElementById('credito').value = transacao.credito;
+
+    document.getElementById('adicionar').style.display = 'none';
+    document.getElementById('atualizar').style.display = 'block';
+    document.getElementById('atualizar').onclick = function () {
+        manipularTransacao(id); // Chama a função com o ID para atualizar
+    };
+}
+
+// Excluir uma transação
+function excluirTransacao(id) {
+    transacoes = transacoes.filter(transacao => transacao.id !== id);
     atualizarListaDeTransacoes();
     atualizarSaldo();
     
-    const usuarioLogado = localStorage.getItem('usuarioLogado'); 
+    const usuarioLogado = localStorage.getItem('usuarioLogado');
     salvarTransacoesNoLocalStorage(usuarioLogado);
-    atualizarGrafico(); // Atualiza o gráfico após adicionar a transação
-    limparFormulario();
+    atualizarGrafico(); // Atualiza o gráfico após a exclusão
+}
+
+// Limpar o formulário
+function limparFormulario() {
+    document.getElementById('descricao').value = '';
+    document.getElementById('categoria').value = 'Alimentação';
+    document.getElementById('debito').value = '';
+    document.getElementById('credito').value = '';
 }
 
 // Atualizar lista de transações no HTML
@@ -146,63 +180,6 @@ function atualizarListaDeTransacoes(transacoesFiltradas = transacoes) {
         li.textContent = 'Nenhuma transação encontrada.';
         lista.appendChild(li);
     }
-}
-
-// Editar uma transação existente
-function editarTransacao(id) {
-    const transacao = transacoes.find(transacao => transacao.id === id);
-    
-    document.getElementById('descricao').value = transacao.descricao;
-    document.getElementById('categoria').value = transacao.categoria;
-    document.getElementById('debito').value = transacao.debito;
-    document.getElementById('credito').value = transacao.credito;
-
-    document.getElementById('adicionar').style.display = 'none';
-    document.getElementById('atualizar').style.display = 'block';
-
-    document.getElementById('atualizar').onclick = function () {
-        atualizarTransacao(id);
-    };
-}
-
-// Atualizar uma transação
-function atualizarTransacao(id) {
-    const transacao = transacoes.find(transacao => transacao.id === id);
-    
-    transacao.descricao = document.getElementById('descricao').value;
-    transacao.categoria = document.getElementById('categoria').value;
-    transacao.debito = parseFloat(document.getElementById('debito').value) || 0;
-    transacao.credito = parseFloat(document.getElementById('credito').value) || 0;
-
-    atualizarListaDeTransacoes();
-    atualizarSaldo();
-    
-    const usuarioLogado = localStorage.getItem('usuarioLogado');
-    salvarTransacoesNoLocalStorage(usuarioLogado);
-    atualizarGrafico(); // Atualiza o gráfico após a edição
-    limparFormulario();
-
-    document.getElementById('adicionar').style.display = 'block';
-    document.getElementById('atualizar').style.display = 'none';
-}
-
-// Excluir uma transação
-function excluirTransacao(id) {
-    transacoes = transacoes.filter(transacao => transacao.id !== id);
-    atualizarListaDeTransacoes();
-    atualizarSaldo();
-    
-    const usuarioLogado = localStorage.getItem('usuarioLogado');
-    salvarTransacoesNoLocalStorage(usuarioLogado);
-    atualizarGrafico(); // Atualiza o gráfico após a exclusão
-}
-
-// Limpar o formulário
-function limparFormulario() {
-    document.getElementById('descricao').value = '';
-    document.getElementById('categoria').value = 'Alimentação';
-    document.getElementById('debito').value = '';
-    document.getElementById('credito').value = '';
 }
 
 // Carregar transações do Local Storage ao iniciar a página
@@ -234,9 +211,6 @@ function exportarCSV() {
 
 // Adicionar o evento ao botão de exportar
 document.getElementById('exportar').addEventListener('click', exportarCSV);
-
-// Adicionar o evento ao botão de adicionar
-document.getElementById('adicionar').addEventListener('click', adicionarTransacao);
 
 // Evento para pesquisa
 document.getElementById('search').addEventListener('input', function() {
